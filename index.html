@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2d4a3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="备课台">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<title>普拉提备课台</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4efe6;
+    --bg-card: #faf6ee;
+    --bg-warm: #ede4d0;
+    --ink: #1f2a26;
+    --ink-soft: #5b665f;
+    --ink-mute: #8a948c;
+    --moss: #2d4a3e;
+    --moss-deep: #1a2e26;
+    --rust: #c25a2c;
+    --rust-soft: #e8a884;
+    --line: #d4cab8;
+    --line-soft: #e5dcc8;
+
+    /* iOS safe areas */
+    --safe-top: env(safe-area-inset-top, 0);
+    --safe-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(45,74,62,0.04) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(194,90,44,0.04) 0%, transparent 40%);
+  }
+
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .display { font-family: 'Fraunces', Georgia, serif; }
+  .mono { font-family: 'DM Mono', monospace; }
+
+  /* ============= APP SHELL ============= */
+  .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(70px + var(--safe-bottom));
+  }
+
+  /* ============= TOP BAR ============= */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: rgba(244, 239, 230, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 0.85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .topbar-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.4rem;
+    color: var(--moss-deep);
+    letter-spacing: -0.01em;
+  }
+
+  .lang-pill {
+    display: flex;
+    background: var(--bg-warm);
+    border-radius: 100px;
+    padding: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+  }
+  .lang-pill button {
+    background: transparent;
+    border: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 100px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .lang-pill button.active {
+    background: var(--moss);
+    color: var(--bg);
+  }
+
+  /* ============= MAIN CONTENT ============= */
+  main {
+    flex: 1;
+    padding: 1.25rem 1.1rem 1.5rem;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .view { display: none; }
+  .view.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .view-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.85rem;
+    font-weight: 400;
+    color: var(--moss-deep);
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.01em;
+  }
+  .view-title em {
+    font-style: italic;
+    color: var(--rust);
+  }
+  .view-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ============= SEARCH ============= */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 0.85rem;
+  }
+  .search-wrap input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.4rem;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .search-wrap input:focus {
+    outline: none;
+    border-color: var(--moss);
+  }
+  .search-wrap::before {
+    content: '⌕';
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-mute);
+    font-size: 1.15rem;
+    pointer-events: none;
+  }
+
+  /* ============= FILTER SCROLLER ============= */
+  .filter-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.25rem 0 0.6rem;
+    margin: 0 -1.1rem;
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .chip {
+    flex-shrink: 0;
+    padding: 0.55rem 0.95rem;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border-radius: 100px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip:active { transform: scale(0.96); }
+  .chip.active {
+    background: var(--moss);
+    color: var(--bg);
+    border-color: var(--moss);
+  }
+
+  /* ============= EXERCISE CARDS ============= */
+  .exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 0.85rem;
+  }
+  .exercise-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .exercise-card:active {
+    transform: scale(0.98);
+    border-color: var(--moss);
+  }
+  .exercise-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--moss);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .exercise-card:active::before { opacity: 1; }
+
+  .card-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-tags {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: var(--bg-warm);
+    color: var(--ink-soft);
+  }
+  .tag.equip { background: rgba(45,74,62,0.1); color: var(--moss); }
+  .tag.level { background: rgba(194,90,44,0.12); color: var(--rust); }
+
+  .card-name-zh {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0.1rem;
+    line-height: 1.25;
+  }
+  .card-name-en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+    margin-bottom: 0.5rem;
+  }
+  .card-target {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .card-target strong { color: var(--moss); font-weight: 600; }
+
+  .card-arrow {
+    flex-shrink: 0;
+    color: var(--ink-mute);
+    font-size: 1.3rem;
+    margin-top: 0.25rem;
+  }
+
+  /* ============= BOTTOM TAB BAR ============= */
+  .tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(250, 246, 238, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-around;
+    padding: 0.4rem 0 calc(0.3rem + var(--safe-bottom));
+    z-index: 100;
+  }
+  .tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    color: var(--ink-mute);
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab:active { transform: scale(0.94); }
+  .tab.active { color: var(--moss); }
+  .tab-icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tab.active .tab-icon { stroke-width: 2; }
+  .tab-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============= MODAL (Detail Sheet) ============= */
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(31,42,38,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .sheet-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 92vh;
+    background: var(--bg-card);
+    border-radius: 20px 20px 0 0;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
+    padding-bottom: calc(1.5rem + var(--safe-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheet.active { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 0.6rem auto 0.3rem;
+    flex-shrink: 0;
+  }
+  .sheet-content { padding: 0.5rem 1.25rem 1rem; }
+
+  .sheet-name-zh {
+    font-family: 'Fraunces', serif;
+    font-size: 1.65rem;
+    font-weight: 400;
+    color: var(--moss-deep);
+    margin-top: 0.25rem;
+    line-height: 1.2;
+  }
+  .sheet-name-en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--rust);
+    margin-bottom: 0.85rem;
+  }
+
+  .sheet-section {
+    margin-top: 1.4rem;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--ink-mute);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-label::before {
+    content: '';
+    width: 14px;
+    height: 1px;
+    background: var(--rust);
+  }
+
+  .target-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+  .target-block {
+    background: var(--bg-warm);
+    padding: 0.7rem 0.85rem;
+    border-radius: 10px;
+  }
+  .target-block .label {
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    margin-bottom: 0.25rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .target-block .value {
+    font-size: 0.83rem;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  .target-block .value em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+    display: block;
+    margin-top: 0.2rem;
+  }
+
+  .purpose-block {
+    margin-top: 0.7rem;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: 0.83rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+
+  /* Cue tabs */
+  .cue-tabs {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.7rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -1.25rem 0.7rem;
+    padding: 0 1.25rem;
+  }
+  .cue-tabs::-webkit-scrollbar { display: none; }
+  .cue-tab {
+    flex-shrink: 0;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .cue-tab.active {
+    background: var(--moss);
+    color: var(--bg);
+    border-color: var(--moss);
+  }
+  .cue-content {
+    background: var(--bg-warm);
+    border-left: 3px solid var(--rust);
+    padding: 0.85rem 1rem;
+    border-radius: 0 10px 10px 0;
+  }
+  .cue-line {
+    margin-bottom: 0.6rem;
+    line-height: 1.6;
+  }
+  .cue-line:last-child { margin-bottom: 0; }
+  .cue-zh {
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin-bottom: 0.15rem;
+  }
+  .cue-en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--ink-mute);
+  }
+
+  .common-errors { list-style: none; }
+  .common-errors li {
+    padding: 0.35rem 0 0.35rem 1.15rem;
+    position: relative;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .common-errors li::before {
+    content: '✕';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    color: var(--rust);
+    font-size: 0.7rem;
+    font-weight: bold;
+  }
+
+  .sheet-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line-soft);
+  }
+  .btn {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--moss); color: var(--bg); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-rust { background: var(--rust); color: var(--bg); }
+
+  /* ============= POSTURE CARDS ============= */
+  .posture-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .posture-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .posture-card:active { transform: scale(0.98); border-color: var(--rust); }
+  .posture-num {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--line);
+    line-height: 1;
+  }
+  .posture-name-zh {
+    font-family: 'Fraunces', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--moss-deep);
+    margin-bottom: 0.15rem;
+    padding-right: 2.5rem;
+  }
+  .posture-name-en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+    margin-bottom: 0.85rem;
+  }
+  .posture-summary {
+    font-size: 0.84rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 0.7rem;
+  }
+  .posture-focus {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--moss);
+  }
+
+  /* Posture detail */
+  .focus-block {
+    background: var(--bg-warm);
+    padding: 1rem 1.15rem;
+    border-radius: 12px;
+    margin-bottom: 1.2rem;
+  }
+  .focus-block.warning {
+    background: rgba(194,90,44,0.08);
+    border-left: 3px solid var(--rust);
+  }
+  .focus-block h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    margin-bottom: 0.4rem;
+  }
+  .focus-block p { font-size: 0.88rem; line-height: 1.55; color: var(--ink); }
+
+  .priority-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+  }
+  .priority-card {
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+  }
+  .priority-card.strengthen { border-left: 3px solid var(--moss); }
+  .priority-card.release { border-left: 3px solid var(--rust); }
+  .priority-card h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--ink);
+  }
+  .priority-card ul { list-style: none; }
+  .priority-card li {
+    font-size: 0.83rem;
+    color: var(--ink-soft);
+    padding: 0.2rem 0;
+    line-height: 1.4;
+  }
+  .priority-card li em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 0.78rem;
+  }
+
+  .rec-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .rec-pill {
+    padding: 0.6rem 0.75rem;
+    background: var(--bg-warm);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+  .rec-pill:active {
+    background: var(--moss);
+    color: var(--bg);
+    transform: scale(0.97);
+  }
+  .rec-pill .en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.7rem;
+    color: var(--ink-mute);
+    display: block;
+    margin-top: 0.1rem;
+  }
+  .rec-pill:active .en { color: rgba(244,239,230,0.7); }
+
+  /* ============= BUILDER ============= */
+  .lesson-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .lesson-meta input,
+  .lesson-meta select {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    -webkit-appearance: none;
+  }
+  .lesson-meta input:focus,
+  .lesson-meta select:focus {
+    outline: none;
+    border-color: var(--moss);
+  }
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .stage {
+    background: var(--bg-card);
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+  }
+  .stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .stage-name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    color: var(--moss);
+  }
+  .stage-name .en {
+    font-style: italic;
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+    margin-left: 0.4rem;
+  }
+  .stage-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .stage-add {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-mute);
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .stage-add:active {
+    background: var(--bg-warm);
+    color: var(--moss);
+  }
+  .planned-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 0.6rem;
+  }
+  .planned-item {
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .planned-item .name { flex: 1; min-width: 0; }
+  .planned-item .name .zh {
+    font-size: 0.88rem;
+    color: var(--ink);
+    margin-bottom: 0.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .planned-item .name .en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.72rem;
+    color: var(--ink-mute);
+  }
+  .planned-item input.reps {
+    width: 64px;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    background: var(--bg-card);
+    text-align: center;
+    -webkit-appearance: none;
+  }
+  .planned-item .remove {
+    background: transparent;
+    border: none;
+    color: var(--ink-mute);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.25rem 0.4rem;
+    flex-shrink: 0;
+  }
+  .planned-item .remove:active { color: var(--rust); transform: scale(0.92); }
+
+  .builder-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  /* ============= EXERCISE PICKER (when adding to stage) ============= */
+  .picker-search {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    margin-bottom: 0.85rem;
+    -webkit-appearance: none;
+  }
+  .picker-search:focus { outline: none; border-color: var(--moss); }
+
+  .picker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .picker-item {
+    padding: 0.75rem 0.95rem;
+    background: var(--bg-warm);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.15s;
+  }
+  .picker-item:active {
+    background: var(--moss);
+    color: var(--bg);
+  }
+  .picker-item:active .en { color: rgba(244,239,230,0.7); }
+  .picker-item .info { flex: 1; min-width: 0; }
+  .picker-item .zh {
+    font-size: 0.92rem;
+    margin-bottom: 0.1rem;
+  }
+  .picker-item .en {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.75rem;
+    color: var(--ink-mute);
+  }
+  .picker-item .add-icon {
+    color: var(--moss);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+  }
+  .picker-item:active .add-icon { color: var(--bg); }
+
+  /* ============= SAVED LESSONS ============= */
+  .saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .saved-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    cursor: pointer;
+  }
+  .saved-card:active { transform: scale(0.98); }
+  .saved-card h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .saved-card .meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .saved-card .preview {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+    margin-bottom: 0.7rem;
+  }
+  .saved-card .actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .saved-card .actions button {
+    flex: 1;
+    padding: 0.55rem;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink);
+  }
+  .saved-card .actions button:active { background: var(--bg-warm); }
+  .saved-card .actions .delete-btn { color: var(--rust); border-color: var(--rust-soft); }
+
+  /* ============= EMPTY STATE ============= */
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink-mute);
+  }
+  .empty h3 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    margin-bottom: 0.4rem;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .empty p {
+    font-size: 0.88rem;
+  }
+
+  /* ============= TOAST ============= */
+  .toast {
+    position: fixed;
+    top: calc(1rem + var(--safe-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-150%);
+    background: var(--moss-deep);
+    color: var(--bg);
+    padding: 0.75rem 1.3rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    z-index: 300;
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    max-width: 90vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ============= INSTALL PROMPT ============= */
+  .install-prompt {
+    display: none;
+    position: fixed;
+    top: calc(1rem + var(--safe-top));
+    left: 1rem;
+    right: 1rem;
+    background: var(--moss-deep);
+    color: var(--bg);
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    z-index: 250;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .install-prompt.show { display: flex; }
+  .install-prompt p {
+    flex: 1;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  .install-prompt button {
+    background: var(--bg);
+    color: var(--moss-deep);
+    border: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .install-prompt .close-x {
+    background: transparent;
+    color: var(--bg);
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+  }
+
+  /* Tablet refinement */
+  @media (min-width: 720px) {
+    main { padding: 2rem; }
+    .view-title { font-size: 2.2rem; }
+    .target-grid { gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- Top Bar -->
+<header class="topbar">
+  <div class="topbar-title" id="topbar-title">动作库</div>
+  <div class="lang-pill">
+    <button class="active" data-lang="both">双语</button>
+    <button data-lang="zh">中</button>
+    <button data-lang="en">EN</button>
+  </div>
+</header>
+
+<!-- Install prompt (Android) -->
+<div class="install-prompt" id="install-prompt">
+  <p>添加到主屏幕，离线也能用</p>
+  <button id="install-btn">安装</button>
+  <button class="close-x" onclick="document.getElementById('install-prompt').classList.remove('show')">✕</button>
+</div>
+
+<main>
+
+<!-- ===== LIBRARY VIEW ===== -->
+<section class="view active" id="view-library">
+  <h1 class="view-title">动作 <em>Library</em></h1>
+  <div class="view-sub" id="library-sub">— 个动作 · exercises</div>
+
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="搜动作 · search…" autocomplete="off">
+  </div>
+
+  <div class="filter-row" id="region-filters">
+    <button class="chip active" data-filter="region" data-value="all">全部</button>
+    <button class="chip" data-filter="region" data-value="upper">上肢</button>
+    <button class="chip" data-filter="region" data-value="core">核心</button>
+    <button class="chip" data-filter="region" data-value="lower">下肢</button>
+    <button class="chip" data-filter="region" data-value="spine">脊柱</button>
+    <button class="chip" data-filter="region" data-value="full">全身</button>
+  </div>
+
+  <div class="filter-row" id="equip-filters">
+    <button class="chip active" data-filter="equip" data-value="all">所有器械</button>
+    <button class="chip" data-filter="equip" data-value="mat">垫</button>
+    <button class="chip" data-filter="equip" data-value="reformer">床</button>
+    <button class="chip" data-filter="equip" data-value="chair">椅</button>
+    <button class="chip" data-filter="equip" data-value="cadillac">梯桶</button>
+    <button class="chip" data-filter="equip" data-value="ring">圈</button>
+    <button class="chip" data-filter="equip" data-value="ball">球</button>
+    <button class="chip" data-filter="equip" data-value="band">弹力带</button>
+  </div>
+
+  <div class="exercise-list" id="exercise-list"></div>
+</section>
+
+<!-- ===== POSTURE VIEW ===== -->
+<section class="view" id="view-posture">
+  <h1 class="view-title">体态 <em>Protocols</em></h1>
+  <div class="view-sub">6 个常见体态 · strengthen + release</div>
+  <div class="posture-list" id="posture-list"></div>
+</section>
+
+<!-- ===== BUILDER VIEW ===== -->
+<section class="view" id="view-builder">
+  <h1 class="view-title">备 <em>Class</em></h1>
+  <div class="view-sub">drag · drop · plan</div>
+
+  <div class="lesson-meta">
+    <input type="text" id="lesson-name" placeholder="课程标题 · class title" autocomplete="off">
+    <div class="meta-row">
+      <select id="lesson-duration">
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+        <option value="60" selected>60 min</option>
+        <option value="75">75 min</option>
+      </select>
+      <select id="lesson-level">
+        <option value="beginner">初级</option>
+        <option value="intermediate" selected>中级</option>
+        <option value="advanced">高级</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="lesson-stages">
+    <div class="stage" data-stage="warmup">
+      <div class="stage-header">
+        <div class="stage-name">热身 <span class="en">Warm-up</span></div>
+        <div class="stage-count">~ 8 min</div>
+      </div>
+      <div class="planned-list" data-list="warmup"></div>
+      <button class="stage-add" data-add-to="warmup">+ 加动作</button>
+    </div>
+    <div class="stage" data-stage="main">
+      <div class="stage-header">
+        <div class="stage-name">主体 <span class="en">Main</span></div>
+        <div class="stage-count">~ 40 min</div>
+      </div>
+      <div class="planned-list" data-list="main"></div>
+      <button class="stage-add" data-add-to="main">+ 加动作</button>
+    </div>
+    <div class="stage" data-stage="cooldown">
+      <div class="stage-header">
+        <div class="stage-name">收操 <span class="en">Cool-down</span></div>
+        <div class="stage-count">~ 7 min</div>
+      </div>
+      <div class="planned-list" data-list="cooldown"></div>
+      <button class="stage-add" data-add-to="cooldown">+ 加动作</button>
+    </div>
+  </div>
+
+  <div class="builder-actions">
+    <button class="btn btn-primary" id="save-lesson">保存</button>
+    <button class="btn btn-secondary" id="export-lesson">复制</button>
+    <button class="btn btn-rust" id="clear-lesson">清空</button>
+  </div>
+</section>
+
+<!-- ===== SAVED VIEW ===== -->
+<section class="view" id="view-saved">
+  <h1 class="view-title">我的 <em>Lessons</em></h1>
+  <div class="view-sub" id="saved-sub">0 节课 · saved</div>
+  <div class="saved-list" id="saved-list"></div>
+</section>
+
+</main>
+
+<!-- Bottom Tab Bar -->
+<nav class="tabbar">
+  <button class="tab active" data-view="library">
+    <svg class="tab-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    <span class="tab-label">动作库</span>
+  </button>
+  <button class="tab" data-view="posture">
+    <svg class="tab-icon" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.5"/><path d="M12 9v8M8 13h8M9 21l3-4 3 4"/></svg>
+    <span class="tab-label">体态</span>
+  </button>
+  <button class="tab" data-view="builder">
+    <svg class="tab-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h6M8 17h4"/></svg>
+    <span class="tab-label">备课</span>
+  </button>
+  <button class="tab" data-view="saved">
+    <svg class="tab-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    <span class="tab-label">课表</span>
+  </button>
+</nav>
+
+</div>
+
+<!-- Bottom Sheet for Exercise Detail -->
+<div class="sheet-overlay" id="sheet-overlay"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-content" id="sheet-content"></div>
+</div>
+
+<!-- Bottom Sheet for Exercise Picker -->
+<div class="sheet-overlay" id="picker-overlay"></div>
+<div class="sheet" id="picker-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-content">
+    <h3 style="font-family:Fraunces; font-size:1.4rem; margin-bottom:0.85rem; color:var(--moss-deep);">选动作 <em style="color:var(--rust); font-size:0.85em;">/ pick exercise</em></h3>
+    <input type="text" class="picker-search" id="picker-search" placeholder="搜动作…" autocomplete="off">
+    <div class="picker-list" id="picker-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
